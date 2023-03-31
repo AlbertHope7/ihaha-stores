@@ -7,7 +7,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         model = Collection
         fields = ["id", "title", "products_count"]
 
-    products_count = serializers.IntegerField()
+    products_count = serializers.IntegerField(read_only=True)
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -25,7 +25,6 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
     inventory_checker = serializers.SerializerMethodField(method_name="inventory_check")
-    collection = serializers.StringRelatedField()
 
     def inventory_check(self, product: Product):
         if product.inventory < 10:

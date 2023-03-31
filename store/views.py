@@ -11,63 +11,43 @@ from .serializer import CollectionSerializer, ProductSerializer
 
 
 class ProductList(generics.ListCreateAPIView):
-    # we call this function when we want to implement a logic otherwise it is advisale to use attributes such as  query_set and seriaizer_class
-    def get_queryset(self):
-        return Product.objects.select_related("collection").all()
+    queryset = Product.objects.select_related("collection").all()
+    serializer_class = ProductSerializer
 
-    def get_serializer_class(self):
-        return ProductSerializer
-
+    # no attribute for this context class so we overide this method
     def get_serializer_context(self):
         return {"request": self.request}
 
 
-class ProductDetail(APIView):
-    def get(self, request, pk):
-        product = get_object_or_404(Product, pk=pk)
-        serializer = ProductSerializer(product)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        product = get_object_or_404(Product, pk=pk)
-        serializer = ProductSerializer(product, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
 
     def delete(self, request, pk):
         product = get_object_or_404(Product, pk=pk)
+        if product.orderitems.count() > 0:
+            return Response(
+                {
+                    "error": "Product cannot be deleted because there are order items associated with it."
+                }
+            )
         product.delete()
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-@api_view(["GET", "POST"])
-def collection_list(request):
-    if request.method == "GET":
-        queryset = Collection.objects.annotate(products_count=Count("products")).all()
-        serializer = CollectionSerializer(queryset, many=True)
-        return Response(serializer.data)
-    elif request.method == "POST":
-        serializer = ProductSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+class CollectionList(generics.ListCreateAPIView):
+    queryset = Collection.objects.annotate(products_count=Count("products")).all()
+    serializer_class = CollectionSerializer
 
 
-@api_view(["GET", "PUT", "DELETE"])
-def collection_detail(request, pk):
-    collection = get_object_or_404(
-        Collection.objects.annotate(products_count=Count("products")), pk=pk
-    )
-    if request.method == "GET":
-        serializer = CollectionSerializer(collection)
-        return Response(serializer.data)
-    elif request.method == "PUT":
-        serializer = CollectionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-    elif request.method == "DELETE":
+class CollectionDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Collection.objects.annotate(products_count=Count("products")).all()
+    serializer_class = CollectionSerializer
+
+    def delete(self, request, pk):
+        collection = get_object_or_404(
+            Collection.objects.annotate(products_count=Count("products")), pk=pk
+        )
         if collection.products.count() > 0:
             return Response(
                 {
