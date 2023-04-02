@@ -1,6 +1,6 @@
 from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,9 +13,10 @@ from .filters import ProductFilters
 class ProductViewset(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilters
     search_fields = ["title", "description"]
+    ordering_fields = ["unit_price", "last_update"]
 
     # no attribute for this context class so we overide this method
     def get_serializer_context(self):
