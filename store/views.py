@@ -10,21 +10,14 @@ from rest_framework import status, generics
 
 from .models import Collection, Product, OrderItem, Review
 from .serializer import CollectionSerializer, ProductSerializer, ReviewSerializer
+from .filters import ProductFilters
 
 
 class ProductViewset(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
-
-    def get_queryset(self):
-        # define a queryset
-        queryset = Product.objects.all()
-        # trying to read collection_id from query string, filter it by get()
-        collection_id = self.request.query_params.get("collection_id")
-        # if collection is not none, define a filter
-        # we get a new querest, to reset our old queryset
-        if collection_id is not None:
-            queryset = queryset.filter(collection_id=collection_id)
-        return queryset
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProductFilters
 
     # no attribute for this context class so we overide this method
     def get_serializer_context(self):

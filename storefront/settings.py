@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_filter",
+    "django_filters",
     # 3rd party
     "rest_framework",
     "playground",
