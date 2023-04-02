@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.decorators import api_view
@@ -12,8 +13,18 @@ from .serializer import CollectionSerializer, ProductSerializer, ReviewSerialize
 
 
 class ProductViewset(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
     serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        # define a queryset
+        queryset = Product.objects.all()
+        # trying to read collection_id from query string, filter it by get()
+        collection_id = self.request.query_params.get("collection_id")
+        # if collection is not none, define a filter
+        # we get a new querest, to reset our old queryset
+        if collection_id is not None:
+            queryset = queryset.filter(collection_id=collection_id)
+        return queryset
 
     # no attribute for this context class so we overide this method
     def get_serializer_context(self):
@@ -45,7 +56,6 @@ class CollectionViewset(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
     def get_queryset(self):
