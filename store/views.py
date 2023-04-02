@@ -2,19 +2,19 @@ from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import viewsets
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Collection, Product, OrderItem, Review
 from .serializer import CollectionSerializer, ProductSerializer, ReviewSerializer
 from .filters import ProductFilters
+from .pagination import DefaultPagination
 
 
 class ProductViewset(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filterset_class = ProductFilters
-    pagination_class = PageNumberPagination
+    pagination_class = DefaultPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["title", "description"]
     ordering_fields = ["unit_price", "last_update"]
@@ -36,6 +36,7 @@ class ProductViewset(viewsets.ModelViewSet):
 class CollectionViewset(viewsets.ModelViewSet):
     queryset = Collection.objects.annotate(products_count=Count("products")).all()
     serializer_class = CollectionSerializer
+    pagination_class = DefaultPagination
 
     def destroy(self, request, *args, **kwargs):
         if Product.objects.filter(collection_id=kwargs["pk"]).count() > 0:
